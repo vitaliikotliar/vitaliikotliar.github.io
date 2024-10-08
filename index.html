@@ -1,47 +1,110 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Home – Vitalii Kotliar</title>
-
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-X22DT41X9V"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
 
-      gtag('config', 'G-X22DT41X9V');
+        gtag('config', 'G-X22DT41X9V');
     </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no, email=no, address=no">
+    <meta name="description" content="Vitalii Kotliar - Senior Frontend Developer specialized in React and React Native.">
+    <meta property="og:title" content="Vitalii Kotliar - Senior Frontend Developer">
+    <meta property="og:description" content="Experienced Senior Frontend Developer skilled in React and React Native, passionate about building modern, scalable applications.">
+    <meta property="og:image" content="https://avatars.githubusercontent.com/u/36627934?v=4">
+    <meta property="og:url" content="https://vitaliikotliar.github.io/">
+    <meta property="og:type" content="website">
+    <meta name="robots" content="index, follow">
+
+    <!-- Favicon -->
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+
+    <!-- Preload important resources -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" as="style">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <title>Vitalii Kotliar - Senior Frontend Developer</title>
+
+    <!-- Structured Data for SEO -->
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "name": "Vitalii Kotliar - Senior Frontend Developer",
+            "url": "https://vitaliikotliar.github.io/",
+            "description": "Personal website of Vitalii Kotliar, an experienced Senior Frontend Developer specialized in React and React Native.",
+            "mainEntity": {
+                "@type": "Person",
+                "name": "Vitalii Kotliar",
+                "jobTitle": "Senior Frontend Developer",
+                "worksFor": {
+                    "@type": "Organization",
+                    "name": "AgileEngine LLC"
+                },
+                "url": "https://vitaliikotliar.github.io/",
+                "sameAs": [
+                    "https://www.linkedin.com/in/vkotliar/",
+                    "https://github.com/vitaliikotliar"
+                ],
+                "address": {
+                    "@type": "PostalAddress",
+                    "addressLocality": "Edinburgh",
+                    "addressRegion": "Midlothian",
+                    "addressCountry": "United Kingdom"
+                },
+                "email": "mailto:vitalii.kotliar.vk@gmail.com",
+                "description": "Experienced Senior Frontend Developer skilled in React and React Native."
+            }
+        }
+    </script>
+
+    <!-- Minified Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
 </head>
-<body>
-<h1>Welcome</h1>
+<body class="bg-gray-100 font-sans">
+<div class="min-h-screen flex items-center justify-center px-4">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-xs md:max-w-lg text-center">
 
-<script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
+        <!-- Optimized Image with Lazy Loading and Alt Text -->
+        <img class="mx-auto rounded-full w-32 h-32 mb-4" src="https://avatars.githubusercontent.com/u/36627934?v=4" alt="Portrait of Vitalii Kotliar" width="128" height="128" loading="lazy">
 
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyCihD35VQM2Xl1doGo6LkDaRv6aA5U3L08",
-    authDomain: "vitalii-kotliar-website.firebaseapp.com",
-    projectId: "vitalii-kotliar-website",
-    storageBucket: "vitalii-kotliar-website.appspot.com",
-    messagingSenderId: "186310727072",
-    appId: "1:186310727072:web:c765b7bb1ae301645500c5",
-    measurementId: "G-4021SJYLQB"
-  };
+        <h1 class="text-2xl font-bold text-gray-800">Vitalii Kotliar</h1>
+        <p class="text-gray-600 text-lg mb-4">Senior Frontend Developer</p>
+        <p class="text-gray-600">Specializing in React and React Native.</p>
 
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-</script>
+        <!-- Contact Information -->
+        <div class="mt-6">
+            <a href="mailto:vitalii.kotliar.vk@gmail.com" class="block text-blue-500 hover:text-blue-700">vitalii.kotliar.vk@gmail.com</a>
+            <p class="text-gray-600 mt-2">Edinburgh, Midlothian, United Kingdom</p>
+        </div>
+
+        <!-- Social Media Links -->
+        <div class="mt-6 flex justify-center space-x-4">
+            <a href="https://linkedin.com/in/vkotliar/" class="text-gray-600 hover:text-gray-800" aria-label="LinkedIn">
+                <svg class="w-6 h-6" viewBox="0 0 72 72">
+                    <g fill="none" fill-rule="evenodd">
+                        <path d="M8,72 L64,72 C68.418278,72 72,68.418278 72,64 L72,8 C72,3.581722 68.418278,-8.11624501e-16 64,0 L8,0 C3.581722,8.11624501e-16 -5.41083001e-16,3.581722 0,8 L0,64 C5.41083001e-16,68.418278 3.581722,72 8,72 Z" fill="currentColor" />
+                        <path d="M62,62 L51.315625,62 L51.315625,43.8021149 C51.315625,38.8127542 49.4197917,36.0245323 45.4707031,36.0245323 C41.1746094,36.0245323 38.9300781,38.9261103 38.9300781,43.8021149 L38.9300781,62 L28.6333333,62 L28.6333333,27.3333333 L38.9300781,27.3333333 L38.9300781,32.0029283 C38.9300781,32.0029283 42.0260417,26.2742151 49.3825521,26.2742151 C56.7356771,26.2742151 62,30.7644705 62,40.051212 L62,62 Z M16.349349,22.7940133 C12.8420573,22.7940133 10,19.9296567 10,16.3970067 C10,12.8643566 12.8420573,10 16.349349,10 C19.8566406,10 22.6970052,12.8643566 22.6970052,16.3970067 C22.6970052,19.9296567 19.8566406,22.7940133 16.349349,22.7940133 Z M11.0325521,62 L21.769401,62 L21.769401,27.3333333 L11.0325521,27.3333333 L11.0325521,62 Z" fill="#FFF"/>
+                    </g>
+                </svg>
+            </a>
+            <a href="https://github.com/vitaliikotliar" class="text-gray-600 hover:text-gray-800" aria-label="GitHub">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 0C5.37 0 0 5.373 0 12c0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.332-1.756-1.332-1.756-1.09-.745.083-.73.083-.73 1.203.084 1.835 1.234 1.835 1.234 1.07 1.833 2.809 1.303 3.495.997.108-.776.42-1.303.76-1.603-2.665-.303-5.466-1.332-5.466-5.933 0-1.312.47-2.382 1.235-3.223-.123-.303-.535-1.523.116-3.176 0 0 1.01-.324 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.554 3.29-1.23 3.29-1.23.652 1.653.24 2.873.12 3.176.765.84 1.235 1.91 1.235 3.223 0 4.61-2.805 5.625-5.475 5.923.435.375.825 1.12.825 2.255 0 1.63-.015 2.945-.015 3.34 0 .32.21.695.825.575C20.565 21.8 24 17.303 24 12c0-6.627-5.373-12-12-12z"></path>
+                </svg>
+            </a>
+        </div>
+    </div>
+</div>
 </body>
 </html>
