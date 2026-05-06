@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GameRelease — Find Any Game's Release Year</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="shortcut icon" href="favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0b0f1c;
+      --accent:    #3d9eff;
+      --accent-glow: rgba(61,158,255,0.22);
+      --glass:     rgba(255,255,255,0.06);
+      --glass-hover: rgba(255,255,255,0.09);
+      --border:    rgba(255,255,255,0.1);
+      --border-strong: rgba(255,255,255,0.16);
+      --text:      #f0f4ff;
+      --text-2:    rgba(240,244,255,0.55);
+      --text-3:    rgba(240,244,255,0.3);
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── Ambient background ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 55% at 15% 5%,  rgba(61,100,255,0.13) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 45% at 85% 90%, rgba(0,200,220,0.09)  0%, transparent 55%),
+        radial-gradient(ellipse 40% 30% at 50% 50%, rgba(61,158,255,0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ── Layout ── */
+    .wrapper {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 20px;
+      gap: 24px;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-wrap {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #1a56db 0%, #0ea5e9 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      box-shadow: 0 4px 16px rgba(61,158,255,0.35);
+      flex-shrink: 0;
+    }
+
+    .header-text h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      color: var(--text);
+    }
+
+    .header-text p {
+      font-size: 0.78rem;
+      font-weight: 400;
+      color: var(--text-2);
+      margin-top: 1px;
+    }
+
+    /* ── Search card ── */
+    .search-card {
+      width: 100%;
+      max-width: 580px;
+      background: var(--glass);
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      padding: 28px 26px 24px;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.04) inset,
+        0 24px 64px rgba(0,0,0,0.45),
+        0 4px 16px rgba(0,0,0,0.2);
+      position: relative;
+    }
+
+    /* top shimmer line */
+    .search-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 16px; right: 16px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+      border-radius: 99px;
+    }
+
+    .search-label {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 10px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    #gameInput {
+      flex: 1;
+      background: rgba(0,0,0,0.28);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 400;
+      padding: 12px 16px;
+      outline: none;
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+
+    #gameInput::placeholder { color: var(--text-3); }
+
+    #gameInput:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    #searchBtn {
+      flex-shrink: 0;
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      padding: 12px 22px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px var(--accent-glow);
+      min-width: 90px;
+    }
+
+    #searchBtn:hover  {
+      background: #5aadff;
+      box-shadow: 0 6px 24px rgba(61,158,255,0.4);
+    }
+    #searchBtn:active { transform: scale(0.97); }
+    #searchBtn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* ── Spinner ── */
+    .spinner {
+      display: none;
+      width: 17px; height: 17px;
+      border: 2px solid rgba(255,255,255,0.25);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .is-loading .spinner  { display: block; }
+    .is-loading .btn-text { display: none; }
+
+    /* ── Result ── */
+    #result { margin-top: 20px; }
+
+    /* PS5-style wide banner card */
+    .result-box {
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      animation: fadeUp 0.3s ease;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-banner {
+      position: relative;
+      width: 100%;
+      height: 200px;
+      background-size: cover;
+      background-position: center top;
+      background-color: rgba(255,255,255,0.04);
+    }
+
+    .result-banner-placeholder {
+      position: relative;
+      width: 100%;
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      background: rgba(255,255,255,0.03);
+    }
+
+    /* gradient overlay on banner */
+    .result-banner::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(11,15,28,0.05) 0%,
+        rgba(11,15,28,0.15) 40%,
+        rgba(11,15,28,0.88) 100%
+      );
+    }
+
+    .result-info {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 16px 20px;
+      z-index: 1;
+    }
+
+    /* for placeholder, info goes below */
+    .result-info-below {
+      padding: 16px 20px;
+      background: rgba(0,0,0,0.2);
+    }
+
+    .result-title {
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.7);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
+      letter-spacing: 0.01em;
+    }
+
+    .result-year-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .result-year {
+      font-size: 2.8rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .result-year-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .result-genres {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .genre-tag {
+      font-size: 0.67rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.6);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 20px;
+      padding: 2px 9px;
+      background: rgba(255,255,255,0.07);
+      backdrop-filter: blur(8px);
+    }
+
+    /* ── Error ── */
+    .error-box {
+      background: rgba(255,59,48,0.1);
+      border: 1px solid rgba(255,59,48,0.25);
+      border-radius: 12px;
+      padding: 14px 16px;
+      color: #ff7b73;
+      font-size: 0.88rem;
+      font-weight: 500;
+      animation: fadeUp 0.25s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .error-box .err-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+    /* ── Recent searches ── */
+    .recents {
+      margin-top: 18px;
+      display: none;
+    }
+
+    .recents-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 8px;
+    }
+
+    .recents-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .recent-chip {
+      font-size: 0.76rem;
+      font-weight: 500;
+      color: var(--text-2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 13px;
+      cursor: pointer;
+      background: rgba(255,255,255,0.04);
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+
+    .recent-chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    /* ── API key notice ── */
+    .api-notice {
+      width: 100%;
+      max-width: 580px;
+      background: rgba(251,191,36,0.08);
+      border: 1px solid rgba(251,191,36,0.25);
+      border-radius: 14px;
+      padding: 14px 18px;
+      font-size: 0.84rem;
+      color: rgba(251,210,100,0.9);
+      line-height: 1.6;
+      display: none;
+    }
+
+    .api-notice a { color: var(--accent); }
+
+    .api-notice code {
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 0.8rem;
+      color: var(--text);
+    }
+
+    /* ── Footer ── */
+    footer {
+      font-size: 0.71rem;
+      color: var(--text-3);
+      text-align: center;
+      letter-spacing: 0.01em;
+    }
+
+    @media (max-width: 480px) {
+      .search-card { padding: 20px 16px; }
+      .input-row { flex-direction: column; }
+      #searchBtn { width: 100%; }
+      .result-banner { height: 160px; }
+      .result-year { font-size: 2.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrapper">
+  <header>
+    <div class="logo-wrap">🎮</div>
+    <div class="header-text">
+      <h1>GameRelease</h1>
+      <p>Instant release year lookup</p>
+    </div>
+  </header>
+
+  <div class="search-card">
+    <span class="search-label">Game title</span>
+    <form class="input-row" id="searchForm">
+      <input
+        type="text"
+        id="gameInput"
+        placeholder="e.g. The Witcher 3, Halo, Celeste…"
+        autocomplete="off"
+        spellcheck="false"
+        autofocus
+      />
+      <button type="submit" id="searchBtn">
+        <span class="btn-text">Search</span>
+        <div class="spinner"></div>
+      </button>
+    </form>
+
+    <div class="recents" id="recents">
+      <div class="recents-label">Recent</div>
+      <div class="recents-list" id="recentsList"></div>
+    </div>
+
+    <div id="result"></div>
+  </div>
+
+  <div class="api-notice" id="apiNotice">
+    ⚠️ <strong>API key needed.</strong> Open <code>index.html</code>, find <code>const API_KEY</code> in the &lt;script&gt;, replace the placeholder with your free key from
+    <a href="https://rawg.io/apidocs" target="_blank" rel="noopener">rawg.io/apidocs</a> (free signup, ~20k req/month).
+  </div>
+
+  <footer>Powered by RAWG.io · Hosted on GitHub Pages</footer>
+</div>
+
+<script>
+  /* ─────────────────────────────────────────────
+     CONFIG — replace with your free RAWG API key
+     Get one free at: https://rawg.io/apidocs
+  ───────────────────────────────────────────── */
+  const API_KEY = 'd95ac647d8fa4d34881da231fe0320c9';
+
+  /* ── Recent searches ── */
+  const MAX_RECENTS = 5;
+
+  function getRecents() {
+    try { return JSON.parse(localStorage.getItem('gr_recents') || '[]'); } catch { return []; }
+  }
+
+  function addRecent(query) {
+    const list = getRecents().filter(q => q.toLowerCase() !== query.toLowerCase());
+    list.unshift(query);
+    localStorage.setItem('gr_recents', JSON.stringify(list.slice(0, MAX_RECENTS)));
+    renderRecents();
+  }
+
+  function renderRecents() {
+    const list = getRecents();
+    const box  = document.getElementById('recents');
+    const ul   = document.getElementById('recentsList');
+    if (!list.length) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    ul.innerHTML = list.map(q =>
+      `<button class="recent-chip" type="button" data-query="${q.replace(/"/g, '&quot;')}">${q}</button>`
+    ).join('');
+  }
+
+  document.getElementById('recentsList').addEventListener('click', e => {
+    const chip = e.target.closest('.recent-chip');
+    if (!chip) return;
+    const q = chip.dataset.query;
+    document.getElementById('gameInput').value = q;
+    doSearch(q);
+  });
+
+  /* ── API key check ── */
+  function isKeyMissing() {
+    return !API_KEY || API_KEY === 'YOUR_RAWG_API_KEY_HERE';
+  }
+
+  function showApiNotice() {
+    document.getElementById('apiNotice').style.display = 'block';
+  }
+
+  /* ── Search ── */
+  async function doSearch(query) {
+    query = query.trim();
+    if (!query) return;
+
+    if (isKeyMissing()) { showApiNotice(); return; }
+
+    const btn    = document.getElementById('searchBtn');
+    const result = document.getElementById('result');
+
+    btn.disabled = true;
+    btn.classList.add('is-loading');
+    result.innerHTML = '';
+
+    try {
+      const url = `https://api.rawg.io/api/games?key=${encodeURIComponent(API_KEY)}&search=${encodeURIComponent(query)}&page_size=1`;
+      const res = await fetch(url);
+
+      if (!res.ok) throw new Error(`API error ${res.status}`);
+
+      const data = await res.json();
+
+      if (!data.results || !data.results.length) {
+        result.innerHTML = errorHtml(`No game found for "<em>${escHtml(query)}</em>". Try a different title.`);
+        return;
+      }
+
+      const game = data.results[0];
+      addRecent(query);
+      result.innerHTML = buildResultHtml(game);
+
+    } catch (err) {
+      result.innerHTML = errorHtml(err.message || 'Network error. Check connection.');
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('is-loading');
+    }
+  }
+
+  function buildResultHtml(game) {
+    const year   = game.released ? game.released.slice(0, 4) : '—';
+    const title  = escHtml(game.name);
+    const genres = (game.genres || []).slice(0, 3).map(g =>
+      `<span class="genre-tag">${escHtml(g.name)}</span>`
+    ).join('');
+
+    if (game.background_image) {
+      return `
+        <div class="result-box">
+          <div class="result-banner" style="background-image:url('${escHtml(game.background_image)}')">
+            <div class="result-info">
+              <div class="result-title">${title}</div>
+              <div class="result-year-row">
+                <div class="result-year">${year}</div>
+                <div class="result-year-label">Release year</div>
+              </div>
+              ${genres ? `<div class="result-genres">${genres}</div>` : ''}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    return `
+      <div class="result-box">
+        <div class="result-banner-placeholder">🕹</div>
+        <div class="result-info-below">
+          <div class="result-title">${title}</div>
+          <div class="result-year-row">
+            <div class="result-year">${year}</div>
+            <div class="result-year-label">Release year</div>
+          </div>
+          ${genres ? `<div class="result-genres">${genres}</div>` : ''}
+        </div>
+      </div>`;
+  }
+
+  function errorHtml(msg) {
+    return `<div class="error-box"><span class="err-icon">⚠</span><span>${msg}</span></div>`;
+  }
+
+  function escHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  /* ── Form submit ── */
+  document.getElementById('searchForm').addEventListener('submit', e => {
+    e.preventDefault();
+    doSearch(document.getElementById('gameInput').value);
+  });
+
+  /* ── Init ── */
+  renderRecents();
+  if (isKeyMissing()) showApiNotice();
+</script>
+</body>
+</html>
