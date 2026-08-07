@@ -587,11 +587,7 @@
 
     try {
       const url = `https://api.rawg.io/api/games?key=${encodeURIComponent(API_KEY)}&search=${encodeURIComponent(query)}&page_size=1`;
-      const res = await fetch(url);
-
-      if (!res.ok) throw new Error(`API error ${res.status}`);
-
-      const data = await res.json();
+      const data = await fetchWithRetry(url);
 
       if (!data.results || !data.results.length) {
         result.innerHTML = errorHtml(`No game found for "<em>${escHtml(query)}</em>". Try a different title.`);
@@ -603,10 +599,33 @@
       result.innerHTML = buildResultHtml(game);
 
     } catch (err) {
-      result.innerHTML = errorHtml(err.message || 'Network error. Check connection.');
+      const msg = err.message === 'RAWG_DOWN'
+        ? 'RAWG.io is temporarily unreachable. Try again in a bit.'
+        : (err.message || 'Network error. Check connection.');
+      result.innerHTML = errorHtml(msg);
     } finally {
       btn.disabled = false;
       btn.classList.remove('is-loading');
+    }
+  }
+
+  /* RAWG occasionally 5xx's/times out transiently; retry a couple times before giving up.
+     4xx errors are not retried — they won't succeed on a second try. */
+  async function fetchWithRetry(url, attempts = 3, delayMs = 700) {
+    for (let i = 0; i < attempts; i++) {
+      let res;
+      try {
+        res = await fetch(url);
+      } catch (err) {
+        if (i === attempts - 1) throw new Error('RAWG_DOWN');
+        await new Promise(r => setTimeout(r, delayMs * (i + 1)));
+        continue;
+      }
+
+      if (res.ok) return res.json();
+      if (res.status < 500) throw new Error(`API error ${res.status}`);
+      if (i === attempts - 1) throw new Error('RAWG_DOWN');
+      await new Promise(r => setTimeout(r, delayMs * (i + 1)));
     }
   }
 
