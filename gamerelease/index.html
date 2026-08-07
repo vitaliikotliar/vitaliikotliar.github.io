@@ -610,14 +610,25 @@
     }
   }
 
+  /* ESRB slug -> minimum age, per ESRB's own descriptor text */
+  const ESRB_AGE = {
+    'everyone': '3+',
+    'everyone-10-plus': '10+',
+    'teen': '13+',
+    'mature': '17+',
+    'adults-only': '18+',
+    'rating-pending': 'RP'
+  };
+
   function buildMetaHtml(game) {
     const items = [];
 
     if (game.esrb_rating) {
+      const age = ESRB_AGE[game.esrb_rating.slug] || escHtml(game.esrb_rating.name);
       items.push(`
         <div class="meta-item">
           <div class="meta-item-label">Age rating</div>
-          <div class="meta-item-value"><span class="age-badge">${escHtml(game.esrb_rating.name)}</span></div>
+          <div class="meta-item-value"><span class="age-badge">${age}</span></div>
         </div>`);
     }
 
