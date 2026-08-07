@@ -304,43 +304,6 @@
       backdrop-filter: blur(8px);
     }
 
-    /* ── Meta info grid (age rating, platforms, etc) ── */
-    .result-meta {
-      padding: 16px 20px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 12px;
-      background: rgba(255,255,255,0.03);
-      border-top: 1px solid var(--border);
-    }
-
-    .meta-item-label {
-      font-size: 0.62rem;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text-3);
-      margin-bottom: 3px;
-    }
-
-    .meta-item-value {
-      font-size: 0.86rem;
-      font-weight: 600;
-      color: var(--text);
-    }
-
-    .age-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.75rem;
-      font-weight: 700;
-      padding: 2px 9px;
-      border-radius: 6px;
-      background: var(--accent);
-      color: #fff;
-    }
-
     /* ── Error ── */
     .error-box {
       background: rgba(255,59,48,0.1);
@@ -380,15 +343,13 @@
     }
 
     .recent-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
       font-size: 0.76rem;
       font-weight: 500;
       color: var(--text-2);
       border: 1px solid var(--border);
       border-radius: 20px;
-      padding: 4px 8px 4px 13px;
+      padding: 4px 13px;
+      cursor: pointer;
       background: rgba(255,255,255,0.04);
       transition: border-color 0.15s, color 0.15s, background 0.15s;
     }
@@ -397,31 +358,6 @@
       border-color: var(--accent);
       color: var(--accent);
       background: var(--accent-glow);
-    }
-
-    .recent-chip-label {
-      cursor: pointer;
-    }
-
-    .recent-chip-remove {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 16px; height: 16px;
-      border-radius: 50%;
-      border: none;
-      background: rgba(255,255,255,0.1);
-      color: inherit;
-      font-size: 0.62rem;
-      line-height: 1;
-      cursor: pointer;
-      flex-shrink: 0;
-      transition: background 0.15s, color 0.15s;
-    }
-
-    .recent-chip-remove:hover {
-      background: rgba(255,59,48,0.35);
-      color: #fff;
     }
 
     /* ── API key notice ── */
@@ -516,7 +452,9 @@
   ───────────────────────────────────────────── */
   const API_KEY = 'd95ac647d8fa4d34881da231fe0320c9';
 
-  /* ── Recent searches (kept until removed manually) ── */
+  /* ── Recent searches ── */
+  const MAX_RECENTS = 5;
+
   function getRecents() {
     try { return JSON.parse(localStorage.getItem('gr_recents') || '[]'); } catch { return []; }
   }
@@ -524,13 +462,7 @@
   function addRecent(query) {
     const list = getRecents().filter(q => q.toLowerCase() !== query.toLowerCase());
     list.unshift(query);
-    localStorage.setItem('gr_recents', JSON.stringify(list));
-    renderRecents();
-  }
-
-  function removeRecent(query) {
-    const list = getRecents().filter(q => q.toLowerCase() !== query.toLowerCase());
-    localStorage.setItem('gr_recents', JSON.stringify(list));
+    localStorage.setItem('gr_recents', JSON.stringify(list.slice(0, MAX_RECENTS)));
     renderRecents();
   }
 
@@ -540,11 +472,8 @@
     const ul   = document.getElementById('recentsList');
     if (!list.length) { box.style.display = 'none'; return; }
     box.style.display = 'block';
-    ul.innerHTML = list.map(q => `
-      <span class="recent-chip" data-query="${q.replace(/"/g, '&quot;')}">
-        <span class="recent-chip-label">${escHtml(q)}</span>
-        <button class="recent-chip-remove" type="button" aria-label="Remove ${escHtml(q)}">✕</button>
-      </span>`
+    ul.innerHTML = list.map(q =>
+      `<button class="recent-chip" type="button" data-query="${q.replace(/"/g, '&quot;')}">${q}</button>`
     ).join('');
   }
 
@@ -552,12 +481,6 @@
     const chip = e.target.closest('.recent-chip');
     if (!chip) return;
     const q = chip.dataset.query;
-
-    if (e.target.closest('.recent-chip-remove')) {
-      removeRecent(q);
-      return;
-    }
-
     document.getElementById('gameInput').value = q;
     doSearch(q);
   });
@@ -587,7 +510,11 @@
 
     try {
       const url = `https://api.rawg.io/api/games?key=${encodeURIComponent(API_KEY)}&search=${encodeURIComponent(query)}&page_size=1`;
-      const data = await fetchWithRetry(url);
+      const res = await fetch(url);
+
+      if (!res.ok) throw new Error(`API error ${res.status}`);
+
+      const data = await res.json();
 
       if (!data.results || !data.results.length) {
         result.innerHTML = errorHtml(`No game found for "<em>${escHtml(query)}</em>". Try a different title.`);
@@ -599,84 +526,11 @@
       result.innerHTML = buildResultHtml(game);
 
     } catch (err) {
-      const msg = err.message === 'RAWG_DOWN'
-        ? 'RAWG.io is temporarily unreachable. Try again in a bit.'
-        : (err.message || 'Network error. Check connection.');
-      result.innerHTML = errorHtml(msg);
+      result.innerHTML = errorHtml(err.message || 'Network error. Check connection.');
     } finally {
       btn.disabled = false;
       btn.classList.remove('is-loading');
     }
-  }
-
-  /* RAWG occasionally 5xx's/times out transiently; retry a couple times before giving up.
-     4xx errors are not retried — they won't succeed on a second try. */
-  async function fetchWithRetry(url, attempts = 3, delayMs = 700) {
-    for (let i = 0; i < attempts; i++) {
-      let res;
-      try {
-        res = await fetch(url);
-      } catch (err) {
-        if (i === attempts - 1) throw new Error('RAWG_DOWN');
-        await new Promise(r => setTimeout(r, delayMs * (i + 1)));
-        continue;
-      }
-
-      if (res.ok) return res.json();
-      if (res.status < 500) throw new Error(`API error ${res.status}`);
-      if (i === attempts - 1) throw new Error('RAWG_DOWN');
-      await new Promise(r => setTimeout(r, delayMs * (i + 1)));
-    }
-  }
-
-  /* ESRB slug -> minimum age, per ESRB's own descriptor text */
-  const ESRB_AGE = {
-    'everyone': '3+',
-    'everyone-10-plus': '10+',
-    'teen': '13+',
-    'mature': '17+',
-    'adults-only': '18+',
-    'rating-pending': 'RP'
-  };
-
-  function buildMetaHtml(game) {
-    const items = [];
-
-    if (game.esrb_rating) {
-      const age = ESRB_AGE[game.esrb_rating.slug] || escHtml(game.esrb_rating.name);
-      items.push(`
-        <div class="meta-item">
-          <div class="meta-item-label">Age rating</div>
-          <div class="meta-item-value"><span class="age-badge">${age}</span></div>
-        </div>`);
-    }
-
-    if (game.metacritic) {
-      items.push(`
-        <div class="meta-item">
-          <div class="meta-item-label">Metacritic</div>
-          <div class="meta-item-value">${game.metacritic}</div>
-        </div>`);
-    }
-
-    if (game.platforms && game.platforms.length) {
-      const names = game.platforms.slice(0, 4).map(p => p.platform.name).join(', ');
-      items.push(`
-        <div class="meta-item">
-          <div class="meta-item-label">Platforms</div>
-          <div class="meta-item-value">${escHtml(names)}</div>
-        </div>`);
-    }
-
-    if (game.playtime) {
-      items.push(`
-        <div class="meta-item">
-          <div class="meta-item-label">Avg. playtime</div>
-          <div class="meta-item-value">${game.playtime}h</div>
-        </div>`);
-    }
-
-    return items.length ? `<div class="result-meta">${items.join('')}</div>` : '';
   }
 
   function buildResultHtml(game) {
@@ -685,7 +539,6 @@
     const genres = (game.genres || []).slice(0, 3).map(g =>
       `<span class="genre-tag">${escHtml(g.name)}</span>`
     ).join('');
-    const meta = buildMetaHtml(game);
 
     if (game.background_image) {
       return `
@@ -700,7 +553,6 @@
               ${genres ? `<div class="result-genres">${genres}</div>` : ''}
             </div>
           </div>
-          ${meta}
         </div>`;
     }
 
@@ -715,7 +567,6 @@
           </div>
           ${genres ? `<div class="result-genres">${genres}</div>` : ''}
         </div>
-        ${meta}
       </div>`;
   }
 
