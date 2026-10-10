@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Name That Flag — All Countries</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏁</text></svg>">
+<style>
+  :root{
+    --bg:#0f172a; --card:#1e293b; --accent:#3b82f6; --good:#22c55e; --bad:#ef4444; --text:#f1f5f9; --muted:#94a3b8;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:var(--bg); color:var(--text); display:flex; justify-content:center; padding:24px 16px;
+  }
+  .wrap{width:100%; max-width:560px;}
+  h1{font-size:1.4rem; text-align:center; margin-bottom:4px;}
+  .sub{text-align:center; color:var(--muted); margin-bottom:20px; font-size:0.9rem;}
+  .bar{display:flex; justify-content:space-between; font-size:0.9rem; color:var(--muted); margin-bottom:10px;}
+  .card{background:var(--card); border-radius:16px; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,0.3); display:flex; flex-direction:column;}
+  .flagbox{display:flex; justify-content:center; align-items:center; margin-bottom:20px; height:165px;}
+  .flagbox img{
+    max-width:100%; max-height:165px; width:auto; height:auto; border-radius:8px; border:1px solid #334155; box-shadow:0 4px 12px rgba(0,0,0,0.4);
+  }
+  .choices{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .choice{
+    background:#334155; color:var(--text); border:2px solid transparent; border-radius:10px;
+    padding:14px 10px; font-size:0.95rem; cursor:pointer; transition:all .15s;
+    min-height:56px; display:flex; align-items:center; justify-content:center; text-align:center;
+  }
+  .footer-left{display:flex; align-items:center; gap:12px;}
+  .region{font-size:0.9rem; font-weight:600; color:var(--good);}
+  .choice:hover{background:#475569;}
+  .choice.correct{background:var(--good); border-color:var(--good); color:#062;}
+  .choice.wrong{background:var(--bad); border-color:var(--bad); color:#200;}
+  .choice:disabled{cursor:default;}
+  .choice.dim{opacity:0.5;}
+  .footer{display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:18px;}
+  button.next{
+    background:var(--accent); color:#fff; border:none; padding:10px 20px; border-radius:8px;
+    font-size:0.95rem; cursor:pointer; visibility:hidden;
+  }
+  button.next.show{visibility:visible;}
+  .restart{background:transparent; color:var(--muted); border:1px solid #334155; padding:8px 14px; border-radius:8px; cursor:pointer; font-size:0.85rem;}
+  .result{text-align:center;}
+  .result h2{margin-bottom:6px;}
+  .result p{color:var(--muted); margin-bottom:20px;}
+  .missed{text-align:left; max-height:240px; overflow:auto; background:#0f172a; border-radius:10px; padding:12px; margin-bottom:20px; font-size:0.85rem;}
+  .missed div{padding:4px 0; border-bottom:1px solid #1e293b;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🌍 Name That Flag</h1>
+  <div class="sub">All <span id="totalCount">0</span> world flags — no shortcuts</div>
+  <div class="bar">
+    <span id="progress"></span>
+    <span id="score"></span>
+  </div>
+  <div class="card" id="card"></div>
+</div>
+
+<script src="countries.js?v=2"></script>
+<script>
+const TOTAL = COUNTRIES.length;
+const STAGE_SIZE = 50;
+const STAGES = Math.ceil(TOTAL / STAGE_SIZE);
+const STORE_KEY = 'flags-game';
+const BY_CODE = Object.fromEntries(COUNTRIES);
+document.getElementById('totalCount').textContent = TOTAL;
+
+let order = [];
+let stage = 0;
+let questions = [];
+let idx = 0;
+let score = 0;
+let missed = [];
+let answered = false;
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function flagUrl(code){
+  return `https://flagcdn.com/w320/${code}.png`;
+}
+
+function save(){
+  try { localStorage.setItem(STORE_KEY, JSON.stringify({order, stage})); } catch(e) {}
+}
+
+function load(){
+  try {
+    const d = JSON.parse(localStorage.getItem(STORE_KEY));
+    const valid = d && Array.isArray(d.order) && d.order.length === TOTAL
+      && new Set(d.order).size === TOTAL && d.order.every(c => BY_CODE[c])
+      && Number.isInteger(d.stage) && d.stage >= 0 && d.stage < STAGES;
+    if(valid){ order = d.order; stage = d.stage; return true; }
+  } catch(e) {}
+  return false;
+}
+
+function newGame(){
+  order = shuffle(COUNTRIES.map(c => c[0]));
+  stage = 0;
+  save();
+  startStage();
+}
+
+function startStage(){
+  questions = order.slice(stage*STAGE_SIZE, (stage+1)*STAGE_SIZE);
+  idx = 0; score = 0; missed = [];
+  renderQuestion();
+}
+
+function nextStage(){
+  stage++;
+  save();
+  startStage();
+}
+
+function renderQuestion(){
+  answered = false;
+  const card = document.getElementById('card');
+  const code = questions[idx];
+  const name = BY_CODE[code];
+
+  const distractors = shuffle(COUNTRIES.filter(c => c[0] !== code)).slice(0,3);
+  const options = shuffle([[code,name], ...distractors]);
+
+  document.getElementById('progress').textContent = `Stage ${stage+1}/${STAGES} · ${idx+1} / ${questions.length}`;
+  document.getElementById('score').textContent = `✓ ${score} · ✗ ${missed.length}`;
+
+  card.innerHTML = `
+    <div class="flagbox"><img src="${flagUrl(code)}" alt="flag"></div>
+    <div class="choices">
+      ${options.map(o => `<button class="choice" data-name="${o[1]}">${o[1]}</button>`).join('')}
+    </div>
+    <div class="footer">
+      <div class="footer-left">
+        <button class="restart" onclick="startStage()">Restart</button>
+        <span class="region" id="region"></span>
+      </div>
+      <button class="next" id="nextBtn">${idx+1===questions.length ? 'Finish' : 'Next →'}</button>
+    </div>
+  `;
+
+  const correctName = name;
+  card.querySelectorAll('.choice').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if(answered) return;
+      answered = true;
+      const picked = btn.dataset.name;
+      card.querySelectorAll('.choice').forEach(b => {
+        b.disabled = true;
+        if(b.dataset.name === correctName){
+          b.classList.add('correct');
+          document.getElementById('region').textContent = REGIONS[code];
+        }
+        else if(b === btn) b.classList.add('wrong');
+        else b.classList.add('dim');
+      });
+      if(picked === correctName){
+        score++;
+      } else {
+        missed.push({code, name: correctName});
+      }
+      document.getElementById('score').textContent = `✓ ${score} · ✗ ${missed.length}`;
+      document.getElementById('nextBtn').classList.add('show');
+    });
+  });
+
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    idx++;
+    if(idx >= questions.length) renderResult();
+    else renderQuestion();
+  });
+}
+
+function renderResult(){
+  const card = document.getElementById('card');
+  const total = questions.length;
+  const last = stage === STAGES-1;
+  document.getElementById('progress').textContent = `Stage ${stage+1}/${STAGES} complete`;
+  document.getElementById('score').textContent = '';
+  const pct = Math.round((score/total)*100);
+  card.innerHTML = `
+    <div class="result">
+      <h2>${score} / ${total} (${pct}%)</h2>
+      <p>${missed.length===0 ? "Perfect score." : `Missed ${missed.length} flag${missed.length>1?'s':''}.`}</p>
+      ${missed.length ? `<div class="missed">${missed.map(m=>`<div><img src="${flagUrl(m.code)}" width="24" style="vertical-align:middle;margin-right:8px;border-radius:2px;">${m.name}</div>`).join('')}</div>` : ''}
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button class="restart" onclick="startStage()" style="padding:10px 18px;">Retry stage</button>
+        ${last
+          ? `<button class="next show" onclick="newGame()">New game</button>`
+          : `<button class="next show" onclick="nextStage()">Stage ${stage+2} →</button>`}
+      </div>
+    </div>
+  `;
+}
+
+if(load()) startStage(); else newGame();
+</script>
+</body>
+</html>
